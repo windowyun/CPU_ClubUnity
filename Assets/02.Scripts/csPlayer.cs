@@ -7,6 +7,8 @@ public class csPlayer : MonoBehaviour
     public float speed = 20.0f;
     public float jumpPower = 20.0f;
 
+    float timer;
+    bool isJump = false;
     bool isGround;
     public float checkJump;
     public Transform pos;
@@ -27,6 +29,7 @@ public class csPlayer : MonoBehaviour
     
     void Update()
     {
+        anim.SetFloat("velocityY", rigid.velocity.y);
         /*
         Vector2 postion = transform.position;
         float h = Input.GetAxis("Horizontal");
@@ -52,12 +55,23 @@ public class csPlayer : MonoBehaviour
         else
             anim.SetBool("moving", false);
 
-        isGround = Physics2D.OverlapCircle(trans.position, checkJump, islayer);
-        if (Input.GetButtonDown("Jump") && isGround == true)
+        //isGround = Physics2D.OverlapCircle(trans.position, checkJump, islayer);
+        if (Input.GetButtonDown("Jump") && !isJump)// && isGround == true)
         {
+            anim.SetTrigger("Jump");
             //rigid.velocity = Vector2.up * jumpPower;
             rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+            isJump = true;
+            anim.SetBool("jumping", true);
+            
         }
+
+        if (Input.GetKey(KeyCode.DownArrow))
+        {
+            anim.SetBool("laying", true);
+        }
+        else
+            anim.SetBool("laying", false);
         
         //Postion 직접 변경
         //postion.x += h * speed * Time.deltaTime;
@@ -88,5 +102,15 @@ public class csPlayer : MonoBehaviour
         */
         rigid.velocity = new Vector2(h * speed, rigid.velocity.y);
     }
-    
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag == "Ground")
+        {
+            Debug.Log("asdasd");
+            isJump = false;
+            anim.SetBool("jumping", false);
+        }
+    }
+
 }
