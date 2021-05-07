@@ -19,12 +19,15 @@ public class csPlayer : MonoBehaviour
     Animator anim;
     [SerializeField]
     LayerMask islayer;
+    [SerializeField]
+    CapsuleCollider2D coli;
     void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
         trans = GetComponent<Transform>();
         render = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
+        coli = GetComponent<CapsuleCollider2D>();
     }
     
     void Update()
@@ -69,9 +72,20 @@ public class csPlayer : MonoBehaviour
         if (Input.GetKey(KeyCode.DownArrow))
         {
             anim.SetBool("laying", true);
+            coli.offset = new Vector2(0, -0.25f);
+            coli.size = new Vector2(0.13f, 0.25f);
         }
         else
+        {
             anim.SetBool("laying", false);
+            coli.offset = new Vector2(0, -0.21f);
+            coli.size = new Vector2(0.13f, 0.33f);
+        }
+
+        if(Input.GetKeyDown(KeyCode.Z))
+        {
+            anim.SetTrigger("Attack");
+        }
         
         //Postion 직접 변경
         //postion.x += h * speed * Time.deltaTime;
@@ -107,7 +121,6 @@ public class csPlayer : MonoBehaviour
     {
         if (collision.gameObject.tag == "Ground")
         {
-            Debug.Log("asdasd");
             isJump = false;
             anim.SetBool("jumping", false);
         }

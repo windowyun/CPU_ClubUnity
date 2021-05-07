@@ -1250,7 +1250,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 6824eb53212d9884fae08bbe7788990a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -1303,8 +1303,8 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!61 &1321346061
-BoxCollider2D:
+--- !u!70 &1321346061
+CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1317,18 +1317,8 @@ BoxCollider2D:
   m_UsedByEffector: 1
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: -0.21}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1.28, y: 1.28}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  serializedVersion: 2
   m_Size: {x: 0.13, y: 0.33}
-  m_EdgeRadius: 0
+  m_Direction: 0
 --- !u!212 &1321346062
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1434,6 +1424,7 @@ MonoBehaviour:
   islayer:
     serializedVersion: 2
     m_Bits: 256
+  coli: {fileID: 0}
 --- !u!251 &1321346066
 PlatformEffector2D:
   m_ObjectHideFlags: 0
