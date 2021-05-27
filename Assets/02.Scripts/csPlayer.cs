@@ -4,13 +4,16 @@ using UnityEngine;
 
 public class csPlayer : MonoBehaviour
 {
-    [Header("Move & Jump")]
-    public float speed = 20.0f;
-    public float jumpPower = 20.0f;
+    [Header("Move & Jump & Roll")]
+    public float speed = 3.0f;
+    public float rollSpeed = 30.0f;
+    public float jumpPower = 4.0f;
+    /*
     [Header("BoxCast")]
     [SerializeField] Vector2 boxCastSize = new Vector2(0.28f, 0.01f);
     [SerializeField] float boxCastDistance = 0.03f;
     [SerializeField] Vector3 boxCastStart = new Vector3(0.0f, -1.1f, 0.0f);
+    */
     [Header("OverlapCircle")]
     [SerializeField] Vector3 overlapCircleStart = new Vector3(0.0f, -1.1f, 0.0f);
     [SerializeField] float overlapCircleRadius = 0.03f;
@@ -18,6 +21,7 @@ public class csPlayer : MonoBehaviour
     float timer;
     bool isJump = false;
     bool isGround;
+    bool isRoll;
     
     Rigidbody2D rigid = new Rigidbody2D();
     Transform trans;
@@ -37,31 +41,9 @@ public class csPlayer : MonoBehaviour
     void Update()
     {
         anim.SetFloat("velocityY", rigid.velocity.y);
+        // OverlapCircle로 땅 확인
         isJump = Physics2D.OverlapCircle(trans.position + overlapCircleStart, overlapCircleRadius, LayerMask.GetMask("Ground"));
-        
-        /*
-        RaycastHit2D raycastHit2D = Physics2D.BoxCast(trans.position + boxCastStart, boxCastSize, 0f, Vector2.down, boxCastDistance, LayerMask.GetMask("Ground"));
-        if (raycastHit2D.collider != null)
-        {
-            isJump = false;
-            anim.SetBool("jumping", false);
-        }
-        */
-
-        /*
-        Vector2 postion = transform.position;
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
-
-        if(Input.GetButton("Horizontal"))
-        {
-            render.flipX = Input.GetAxisRaw("Horizontal") == -1;
-        }
-        if (Input.GetButton("Horizontal"))
-            anim.SetBool("moving", true);
-        else
-            anim.SetBool("moving", false);
-        */
+   
 
         if (Input.GetAxis("Horizontal") > 0)
             render.flipX = false;
@@ -74,7 +56,7 @@ public class csPlayer : MonoBehaviour
             anim.SetBool("moving", false);
 
         //isGround = Physics2D.OverlapCircle(trans.position, checkJump, islayer);
-        if (Input.GetButtonDown("Jump") && isJump)// && isGround == true)
+        if (Input.GetButtonDown("Jump") && isJump && !isRoll)// && isGround == true)
         {
             //isJump = true;
             
@@ -90,7 +72,7 @@ public class csPlayer : MonoBehaviour
             anim.SetBool("jumping", false);
         }
 
-        if (Input.GetKey(KeyCode.DownArrow))
+        if (Input.GetKey(KeyCode.DownArrow) && rigid.velocity == Vector2.zero && !isRoll)
         {
             anim.SetBool("laying", true);
             coli.offset = new Vector2(0, -0.25f);
@@ -103,17 +85,29 @@ public class csPlayer : MonoBehaviour
             coli.size = new Vector2(0.13f, 0.33f);
         }
 
-        if (Input.GetKeyDown(KeyCode.Z))
+        if (Input.GetKeyDown(KeyCode.Z) && !isRoll)
         {
             anim.SetTrigger("Attack");
         }
 
-        //Postion 직접 변경
-        //postion.x += h * speed * Time.deltaTime;
-        //trans.position = postion;
+        if(Input.GetKeyDown(KeyCode.LeftShift) && rigid.velocity.y == 0f && isJump)
+        {
+            anim.SetTrigger("Roll");    
+        }
 
-        //TransLate
-        //trans.Translate(new Vector3(h * speed * Time.deltaTime, 0, 0));
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName("Skull2Roll"))
+        {
+            if (anim.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.95f)
+            {
+                isRoll = false;
+            }
+
+            else if (anim.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.95f)
+            {
+                isRoll = true;
+            }
+        }
+
     }
 
     void FixedUpdate()
@@ -121,31 +115,119 @@ public class csPlayer : MonoBehaviour
         //rigidBody2D.velocity 이동 velocity : 리지드 바디의 현재 속도
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
-        /*
-        if(isJump)
+        //float hf = Input.GetAxisRaw("Horzontal");
+
+        if(isRoll)
         {
-            anim.SetTrigger("Jump");
-            //rigid.velocity = Vector2.up * jumpPower;
-            rigid.AddForce(Vector2.up * jumpPower);//, ForceMode2D.Impulse);
-            anim.SetBool("jumping", true);
+            if (render.flipX == false)
+                rigid.velocity = new Vector2(1f * rollSpeed , rigid.velocity.y);
+            else if (render.flipX == true)
+                rigid.velocity = new Vector2(-1f * rollSpeed , rigid.velocity.y);
         }
-        */
-        /*
-        if(Input.GetButtonDown("Jump"))
+
+        else
+            rigid.velocity = new Vector2(h * speed, rigid.velocity.y);
+        Debug.Log(rigid.velocity.x);
+    }
+
+    void Laying()
+    {
+        if (Input.GetKey(KeyCode.DownArrow) && rigid.velocity == Vector2.zero)
         {
-            rigid.velocity = Vector2.up * jumpPower;
+            anim.SetBool("laying", true);
+            coli.offset = new Vector2(0, -0.25f);
+            coli.size = new Vector2(0.13f, 0.25f);
         }
-        */
-        /*
-        rigid.AddForce(Vector2.right * h, ForceMode2D.Impulse);
-        if(Mathf.Abs(rigid.velocity.x) > 3)
+        else
         {
-            rigid.velocity = new Vector2(3.0f * h, rigid.velocity.y);
+            anim.SetBool("laying", false);
+            coli.offset = new Vector2(0, -0.21f);
+            coli.size = new Vector2(0.13f, 0.33f);
         }
-        */
+    }
+
+    void Move()
+    {
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+
+        // Move 모션
+        if (Input.GetButton("Horizontal"))
+            anim.SetBool("moving", true);
+        else
+            anim.SetBool("moving", false);
+
+        //Postion 직접 변경
+        //postion.x += h * speed * Time.deltaTime;
+        //trans.position = postion;
+
+        //TransLate
+        //trans.Translate(new Vector3(h * speed * Time.deltaTime, 0, 0));
+
+        //rigidBody2D.velocity 이동 velocity : 리지드 바디의 현재 속도
         rigid.velocity = new Vector2(h * speed, rigid.velocity.y);
     }
 
+    void Jump()
+    {
+
+        // OverlapCircle로 땅 확인
+        isJump = Physics2D.OverlapCircle(trans.position + overlapCircleStart, overlapCircleRadius, LayerMask.GetMask("Ground"));
+
+        /*
+        // boxcast로 땅 확인
+        RaycastHit2D raycastHit2D = Physics2D.BoxCast(trans.position + boxCastStart, boxCastSize, 0f, Vector2.down, boxCastDistance, LayerMask.GetMask("Ground"));
+        if (raycastHit2D.collider != null)
+        {
+            isJump = false;
+            anim.SetBool("jumping", false);
+        }
+        */
+
+        if (Input.GetButtonDown("Jump") && isJump)// && isGround == true)
+        {
+            //isJump = true;
+
+            anim.SetTrigger("Jump");
+            
+            //velocity 점프
+            //rigid.velocity = Vector2.up * jumpPower;
+            //최고 속도 제한
+            /*
+            if (Mathf.Abs(rigid.velocity.x) > 3)
+            {
+                rigid.velocity = new Vector2(3.0f * h, rigid.velocity.y);
+            }
+            */
+
+            //AddForce 점프
+            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+            anim.SetBool("jumping", true);
+
+        }
+
+        //점프 모션 종료 : 착지 모션 시작
+        if (isJump && rigid.velocity.y <= 0)
+        {
+            anim.SetBool("jumping", false);
+        }
+    }
+
+    void FilpX() //방향 전환
+    {
+        
+        /*
+        if (Input.GetButton("Horizontal"))
+        {
+            render.flipX = Input.GetAxisRaw("Horizontal") == -1;
+        }
+        */
+
+        if (Input.GetAxis("Horizontal") > 0)
+            render.flipX = false;
+        else if (Input.GetAxis("Horizontal") < 0)
+            render.flipX = true;
+    }
 
     /*
     // OncpllisionEnter 으로 땅 확인
