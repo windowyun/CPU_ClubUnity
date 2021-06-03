@@ -17,12 +17,20 @@ public class csPlayer : MonoBehaviour
     [Header("OverlapCircle")]
     [SerializeField] Vector3 overlapCircleStart = new Vector3(0.0f, -1.1f, 0.0f);
     [SerializeField] float overlapCircleRadius = 0.03f;
-    
+    [Header("CoolTime")]
+    public float rollCoolTime = 0f;
+    public float attackCoolTime = 0f;
+
+    public float rollTime = 0f;
+    public float attackTime = 0f;
+
     float timer;
     bool isJump = false;
     bool isGround;
     bool isRoll;
-    
+
+    //GameManager gameManager = new GameManager();
+
     Rigidbody2D rigid = new Rigidbody2D();
     Transform trans;
     SpriteRenderer render;
@@ -40,14 +48,22 @@ public class csPlayer : MonoBehaviour
 
     void Update()
     {
+        rollTime += Time.deltaTime;
+        attackTime += Time.deltaTime;
+
+        if (rollTime > 100)
+            rollTime = rollCoolTime;
+
+        if (attackTime > 100)
+            attackTime = attackCoolTime;
+
         anim.SetFloat("velocityY", rigid.velocity.y);
         // OverlapCircle·Î ¶¥ È®ÀÎ
         isJump = Physics2D.OverlapCircle(trans.position + overlapCircleStart, overlapCircleRadius, LayerMask.GetMask("Ground"));
-   
 
-        if (Input.GetAxis("Horizontal") > 0)
+        if (Input.GetAxis("Horizontal") > 0 && !isRoll)
             render.flipX = false;
-        else if (Input.GetAxis("Horizontal") < 0)
+        else if (Input.GetAxis("Horizontal") < 0 && !isRoll)
             render.flipX = true;
 
         if (Input.GetButton("Horizontal"))
@@ -85,14 +101,16 @@ public class csPlayer : MonoBehaviour
             coli.size = new Vector2(0.13f, 0.33f);
         }
 
-        if (Input.GetKeyDown(KeyCode.Z) && !isRoll)
+        if (Input.GetKeyDown(KeyCode.Z) && !isRoll && attackTime >= attackCoolTime)
         {
+            attackTime = 0f;
             anim.SetTrigger("Attack");
         }
 
-        if(Input.GetKeyDown(KeyCode.LeftShift) && rigid.velocity.y == 0f && isJump)
+        if(Input.GetKeyDown(KeyCode.LeftShift) && rigid.velocity.y == 0f && isJump && rollTime >= rollCoolTime)
         {
-            anim.SetTrigger("Roll");    
+            rollTime = 0f;
+            anim.SetTrigger("Roll");
         }
 
         if (anim.GetCurrentAnimatorStateInfo(0).IsName("Skull2Roll"))
@@ -127,7 +145,7 @@ public class csPlayer : MonoBehaviour
 
         else
             rigid.velocity = new Vector2(h * speed, rigid.velocity.y);
-        Debug.Log(rigid.velocity.x);
+        //Debug.Log(rigid.velocity.x);
     }
 
     void Laying()
