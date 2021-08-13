@@ -2,32 +2,42 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class csPlayer : MonoBehaviour
+public class csPlayer : Actor
 {
     [Header("Move & Jump & Roll")]
-    public float speed = 3.0f;
-    public float rollSpeed = 30.0f;
-    public float jumpPower = 4.0f;
+    [SerializeField] float speed = 3.0f;
+    [SerializeField] float rollSpeed = 4.0f;
+    [SerializeField] float jumpPower = 4.0f;
     /*
     [Header("BoxCast")]
     [SerializeField] Vector2 boxCastSize = new Vector2(0.28f, 0.01f);
     [SerializeField] float boxCastDistance = 0.03f;
     [SerializeField] Vector3 boxCastStart = new Vector3(0.0f, -1.1f, 0.0f);
     */
-    [Header("OverlapCircle")]
-    [SerializeField] Vector3 overlapCircleStart = new Vector3(0.0f, -1.1f, 0.0f);
-    [SerializeField] float overlapCircleRadius = 0.03f;
+    //[Header("OverlapCircle")]
+    //[SerializeField] Vector3 overlapCircleStart = new Vector3(0.0f, -1.1f, 0.0f);
+    //[SerializeField] float overlapCircleRadius = 0.03f;
+
     [Header("CoolTime")]
-    public float rollCoolTime = 0f;
-    public float attackCoolTime = 0f;
+    [SerializeField] float rollCoolTime = 3.0f;
+    [SerializeField] float rollTime = 0f;
+    //[SerializeField] float attackCoolTime = 0f;
+    //[SerializeField] float attackTime = 0f;
 
-    public float rollTime = 0f;
-    public float attackTime = 0f;
+    [Header("Attack")]
+    [SerializeField] Transform pos;
+    [SerializeField] Vector2 boxSize;
+    
+    bool isJump = true;
+    public bool IsJump
+    {
+        get { return isJump; }
+    }
+    bool isRoll = false;
+    bool invincibilityOn = false;
+    float invincibilityTime = 0.1f;
 
-    float timer;
-    bool isJump = false;
-    bool isGround;
-    bool isRoll;
+    bool stopAct = false;
 
     //GameManager gameManager = new GameManager();
 
@@ -36,6 +46,8 @@ public class csPlayer : MonoBehaviour
     SpriteRenderer render;
     Animator anim;
     CapsuleCollider2D coli;
+    Collider2D coli2;
+    GameManager gameManager;
 
     void Awake()
     {
@@ -44,86 +56,32 @@ public class csPlayer : MonoBehaviour
         render = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
         coli = GetComponent<CapsuleCollider2D>();
+
+    }
+
+    void Start()
+    {
+        rollTime -= rollCoolTime;    
     }
 
     void Update()
     {
-        rollTime += Time.deltaTime;
-        attackTime += Time.deltaTime;
-
-        if (rollTime > 100)
-            rollTime = rollCoolTime;
-
-        if (attackTime > 100)
-            attackTime = attackCoolTime;
-
-        anim.SetFloat("velocityY", rigid.velocity.y);
-        // OverlapCircle로 땅 확인
-        isJump = Physics2D.OverlapCircle(trans.position + overlapCircleStart, overlapCircleRadius, LayerMask.GetMask("Ground"));
-
-        if (Input.GetAxis("Horizontal") > 0 && !isRoll)
-            render.flipX = false;
-        else if (Input.GetAxis("Horizontal") < 0 && !isRoll)
-            render.flipX = true;
-
-        if (Input.GetButton("Horizontal"))
-            anim.SetBool("moving", true);
-        else
-            anim.SetBool("moving", false);
-
-        //isGround = Physics2D.OverlapCircle(trans.position, checkJump, islayer);
-        if (Input.GetButtonDown("Jump") && isJump && !isRoll)// && isGround == true)
+        if (!stopAct)
         {
-            //isJump = true;
-            
-            anim.SetTrigger("Jump");
-            //rigid.velocity = Vector2.up * jumpPower;
-            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-            anim.SetBool("jumping", true);
-            
+            FilpX();
+
+            Jump();
+
+            Laying();
+
+            Attack();
+
+            Roll();
         }
 
-        if(isJump && rigid.velocity.y <= 0)
+        if (Input.GetKeyDown(KeyCode.L))
         {
-            anim.SetBool("jumping", false);
-        }
-
-        if (Input.GetKey(KeyCode.DownArrow) && rigid.velocity == Vector2.zero && !isRoll)
-        {
-            anim.SetBool("laying", true);
-            coli.offset = new Vector2(0, -0.25f);
-            coli.size = new Vector2(0.13f, 0.25f);
-        }
-        else
-        {
-            anim.SetBool("laying", false);
-            coli.offset = new Vector2(0, -0.21f);
-            coli.size = new Vector2(0.13f, 0.33f);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Z) && !isRoll && attackTime >= attackCoolTime)
-        {
-            attackTime = 0f;
-            anim.SetTrigger("Attack");
-        }
-
-        if(Input.GetKeyDown(KeyCode.LeftShift) && rigid.velocity.y == 0f && isJump && rollTime >= rollCoolTime)
-        {
-            rollTime = 0f;
-            anim.SetTrigger("Roll");
-        }
-
-        if (anim.GetCurrentAnimatorStateInfo(0).IsName("Skull2Roll"))
-        {
-            if (anim.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.95f)
-            {
-                isRoll = false;
-            }
-
-            else if (anim.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.95f)
-            {
-                isRoll = true;
-            }
+            HitOn(damage, transform);
         }
 
     }
@@ -135,20 +93,50 @@ public class csPlayer : MonoBehaviour
         float v = Input.GetAxis("Vertical");
         //float hf = Input.GetAxisRaw("Horzontal");
 
-        if(isRoll)
+        if (isRoll)
         {
-            if (render.flipX == false)
-                rigid.velocity = new Vector2(1f * rollSpeed , rigid.velocity.y);
-            else if (render.flipX == true)
-                rigid.velocity = new Vector2(-1f * rollSpeed , rigid.velocity.y);
+            if (transform.localScale.x > 0)
+                rigid.velocity = new Vector2(1f * rollSpeed, rigid.velocity.y);
+            else
+                rigid.velocity = new Vector2(-1f * rollSpeed, rigid.velocity.y);
         }
 
-        else
+
+        else if (!stopAct)
+        {
             rigid.velocity = new Vector2(h * speed, rigid.velocity.y);
-        //Debug.Log(rigid.velocity.x);
+            //Debug.Log(rigid.velocity.x);
+        }
     }
 
-    void Laying()
+    void Attack()
+    {
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            //attackTime = 0f; //쿨타임 on
+            anim.SetTrigger("Attack");
+
+            //coli2.GetComponent<Enemy01>().enemyHit(Damage);
+        }
+    }
+
+    void AttackTrue()
+    {
+
+        //float distance = render.flipX == true ? 0.44f : 0;
+
+        Collider2D[] collider2Ds = Physics2D.OverlapBoxAll(pos.position, boxSize, 0f);
+        //Debug.Log(new Vector2(pos.position.x- distance, pos.position.y));
+        //Collider2D[] collider2Ds = Physics2D.OverlapBoxAll( new Vector2(pos.position.x - distance, pos.position.y), boxSize, 0f);
+
+        for (int i = 0;  i < collider2Ds.Length; i++)
+        {
+            if(collider2Ds[i].tag == "Enemy")
+                collider2Ds[i].GetComponent<Enemy>().HitOn(damage);
+        }
+    }
+
+    void Laying()//눕기
     {
         if (Input.GetKey(KeyCode.DownArrow) && rigid.velocity == Vector2.zero)
         {
@@ -164,16 +152,16 @@ public class csPlayer : MonoBehaviour
         }
     }
 
-    void Move()
+    void Move()//움직임
     {
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
-        // Move 모션
-        if (Input.GetButton("Horizontal"))
-            anim.SetBool("moving", true);
-        else
-            anim.SetBool("moving", false);
+        // Move 모션 -> AnimationManager에서 사용
+        //if (Input.GetButton("Horizontal"))
+        //    anim.SetBool("moving", true);
+        //else
+        //    anim.SetBool("moving", false);
 
         //Postion 직접 변경
         //postion.x += h * speed * Time.deltaTime;
@@ -186,11 +174,44 @@ public class csPlayer : MonoBehaviour
         rigid.velocity = new Vector2(h * speed, rigid.velocity.y);
     }
 
-    void Jump()
+    void Roll()//구르기
+    {
+        if (Input.GetKeyDown(KeyCode.LeftShift) && IsJump && Time.time - rollTime > rollCoolTime)
+        {
+            rollTime = Time.time;
+
+            isRoll = true;
+            stopAct = true;
+            invincibilityOn = true;
+        }
+        /*
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName("Skull2Roll"))
+        {
+            if (anim.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.95f)
+            {
+                isRoll = false;
+            }
+
+            else if (anim.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.95f)
+            {
+                isRoll = true;
+            }
+        }
+        */
+    }
+
+    void RollOff()//구르기 종료
+    {
+        isRoll = false;
+        invincibilityOn = false;
+        stopAct = false;
+    }
+
+    void Jump()//점프
     {
 
         // OverlapCircle로 땅 확인
-        isJump = Physics2D.OverlapCircle(trans.position + overlapCircleStart, overlapCircleRadius, LayerMask.GetMask("Ground"));
+        //isJump = Physics2D.OverlapCircle(trans.position + overlapCircleStart, overlapCircleRadius, LayerMask.GetMask("Ground"));
 
         /*
         // boxcast로 땅 확인
@@ -202,12 +223,10 @@ public class csPlayer : MonoBehaviour
         }
         */
 
-        if (Input.GetButtonDown("Jump") && isJump)// && isGround == true)
+        if (Input.GetButtonDown("Jump") && IsJump)// && isGround == true)
         {
-            //isJump = true;
+            isJump = false;
 
-            anim.SetTrigger("Jump");
-            
             //velocity 점프
             //rigid.velocity = Vector2.up * jumpPower;
             //최고 속도 제한
@@ -217,23 +236,15 @@ public class csPlayer : MonoBehaviour
                 rigid.velocity = new Vector2(3.0f * h, rigid.velocity.y);
             }
             */
-
+            //anim.SetBool("jumping", true);
             //AddForce 점프
             rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-            anim.SetBool("jumping", true);
-
-        }
-
-        //점프 모션 종료 : 착지 모션 시작
-        if (isJump && rigid.velocity.y <= 0)
-        {
-            anim.SetBool("jumping", false);
         }
     }
 
     void FilpX() //방향 전환
     {
-        
+
         /*
         if (Input.GetButton("Horizontal"))
         {
@@ -242,41 +253,119 @@ public class csPlayer : MonoBehaviour
         */
 
         if (Input.GetAxis("Horizontal") > 0)
-            render.flipX = false;
+        {
+            //render.flipX = false;
+            transform.localScale = new Vector3(3f, 3f, 1f);
+        }
         else if (Input.GetAxis("Horizontal") < 0)
-            render.flipX = true;
+        {
+            //render.flipX = true;
+            transform.localScale = new Vector3(-3f, 3f, 1f);
+        }
     }
 
-    /*
+    //void coolTime()//쿨타임
+    //{
+    //    rollTime += Time.deltaTime;
+    //    //attackTime += Time.deltaTime;
+
+    //    if (rollTime > 100)
+    //        rollTime = rollCoolTime;
+    //    /*
+    //    if (attackTime > 100)
+    //        attackTime = attackCoolTime;
+    //    */
+    //}
+
+    
     // OncpllisionEnter 으로 땅 확인
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.tag == "Ground")
         {
-            isJump = false;
-            anim.SetBool("jumping", false);
+            isJump = UpOrDown(collision);
         }
     }
-    */
 
+    bool UpOrDown(Collision2D _col)
+    {
+        Vector3 distVec = transform.position - _col.transform.position;
+        if (Vector3.Cross(_col.transform.right, distVec).z > 0)
+        {
+            //Debug.Log("Up");
+            //Debug.Log(Vector3.Cross(_col.transform.right, distVec).z);
+            return true;
+        }
+        Debug.Log("Down");
+        return false;
+    }
+
+   
+    public override void HitOn(int damage, Transform transform)
+    {
+        
+        if (!invincibilityOn)
+        {
+            currentHP = currentHP - damage;
+
+            anim.SetTrigger("Hit");
+
+            StartCoroutine(HitWait(transform));
+
+            if (currentHP <= 0)
+            {
+
+            }
+        }
+    }
+
+    IEnumerator HitWait(Transform transform)
+    {
+        invincibilityOn = true;
+        stopAct = true;
+
+        float direction = trans.position.x > transform.position.x ? 1 : -1;
+        if (direction == 1)
+            transform.localScale = new Vector3(-3f, 3f, 1f);//render.flipX = true;
+        else
+            transform.localScale = new Vector3(3f, 3f, 1f); //render.flipX = false;
+
+        rigid.velocity = new Vector2(0f, rigid.velocity.y);
+        rigid.AddForce(Vector2.right * direction * 2, ForceMode2D.Impulse);
+        yield return new WaitForSeconds(0.8f);
+        stopAct = false;
+        yield return new WaitForSeconds(0.2f);
+        invincibilityOn = false;
+        yield return null;
+    }
+
+    /*
     void OnDrawGizmos()
     {
+        //Attack Box 기즈모
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCube(pos.position, boxSize);
 
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position + overlapCircleStart, overlapCircleRadius);
-        /*
-        RaycastHit2D raycastHit = Physics2D.BoxCast(transform.position + boxCastStart, boxCastSize, 0f, Vector2.down, boxCastDistance, LayerMask.GetMask("Ground"));
 
-        Gizmos.color = Color.red;
-        if (raycastHit.collider != null)
-        {
-            Gizmos.DrawRay(transform.position + boxCastStart, Vector2.down * raycastHit.distance);
-            Gizmos.DrawWireCube(transform.position + boxCastStart + Vector3.down * raycastHit.distance , boxCastSize);
-        }
-        else
-        {
-            Gizmos.DrawRay(transform.position + boxCastStart, Vector2.down * boxCastDistance);
-        }
-        */
+        //ovelapCircle 방식
+        //Gizmos.color = Color.red;
+        //Gizmos.DrawWireSphere(transform.position + overlapCircleStart, overlapCircleRadius);
+        
+        
+        // 레이케스트 방식
+        //RaycastHit2D raycastHit = Physics2D.BoxCast(transform.position + boxCastStart, boxCastSize, 0f, Vector2.down, boxCastDistance, LayerMask.GetMask("Ground"));
+
+        //Gizmos.color = Color.red;
+        //if (raycastHit.collider != null)
+        //{
+        //    Gizmos.DrawRay(transform.position + boxCastStart, Vector2.down * raycastHit.distance);
+        //    Gizmos.DrawWireCube(transform.position + boxCastStart + Vector3.down * raycastHit.distance , boxCastSize);
+        //}
+        //else
+        //{
+        //    Gizmos.DrawRay(transform.position + boxCastStart, Vector2.down * boxCastDistance);
+        //}
+        
     }
+    */
 }

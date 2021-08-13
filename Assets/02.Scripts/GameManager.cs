@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    static GameManager gameManager;
     public float rollCoolTime = 0f;
     public float attackCoolTime = 0f;
 
