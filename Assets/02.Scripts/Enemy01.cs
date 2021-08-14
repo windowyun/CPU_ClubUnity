@@ -7,7 +7,11 @@ public class Enemy01 : Enemy
 
     [Header("Attack")]
     [SerializeField]
-    Transform target;
+    Transform target1;
+    [SerializeField]
+    Transform target2;
+    [SerializeField]
+    ChangePlayer changePlayer;
     [SerializeField]
     Transform pos;
     [SerializeField]
@@ -19,10 +23,13 @@ public class Enemy01 : Enemy
 
     Rigidbody2D rigid2D;
     Animator animator;
+    Transform target;
+
     bool usedTurn = false;
     bool firstTurn = true;
     bool moveOn = false;
     bool isAttack = false;
+    
     float attackTime = 0f;
 
     void Start()
@@ -31,19 +38,25 @@ public class Enemy01 : Enemy
         rigid2D = GetComponent<Rigidbody2D>();
 
         attackTime -= attackDelay;
+
+        if (changePlayer.Currentstats)
+            target = target1;
+        else
+            target = target2;
     }
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.K))
-        {
-            animator.SetTrigger("enemy01Turn");
-        }
+        if (changePlayer.Currentstats)
+            target = target1;
+        else
+            target = target2;
 
         float distance = Vector3.Distance(target.position, transform.position);
         if (distance <= fieldOfVision)
         {
             Turn(distance);
+
             if (distance <= attackOfVision)
             {
                 moveOn = false;
@@ -88,7 +101,9 @@ public class Enemy01 : Enemy
         for (int i = 0; i < collider2Ds.Length; i++)
         {
             if (collider2Ds[i].tag == "Player")
+            {
                 collider2Ds[i].GetComponent<Actor>().HitOn(damage, transform);
+            }
         }
     }
 
@@ -113,16 +128,18 @@ public class Enemy01 : Enemy
             firstTurn = false;
             animator.SetTrigger("enemy01Turn");
         }
-        else if (!isAttack && usedTurn && (target.position.x >= transform.position.x + 0.36f) && transform.localScale.x > 0)
+        else if (isAttack == false && usedTurn && (target.position.x >= transform.position.x + 0.36f) && transform.localScale.x > 0)
         {
             transform.position = new Vector2(transform.position.x + 0.72f, transform.position.y);
             transform.localScale = new Vector3(-3f, 3f, 1f);
+            Debug.Log(isAttack);
         }
 
-        else if (!isAttack && usedTurn && (target.position.x < transform.position.x - 0.36f) && transform.localScale.x < 0)
+        else if (isAttack == false && usedTurn && (target.position.x < transform.position.x - 0.36f) && transform.localScale.x < 0)
         {
             transform.position = new Vector2(transform.position.x - 0.72f, transform.position.y);
             transform.localScale = new Vector3(3f, 3f, 1f);
+            Debug.Log(isAttack);
         }
     }
 
@@ -146,6 +163,7 @@ public class Enemy01 : Enemy
         animator.SetBool("enemy01Move", true);
     }
 
+    /*
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;
@@ -156,4 +174,5 @@ public class Enemy01 : Enemy
         Gizmos.DrawWireSphere(transform.position, attackOfVision);
         Gizmos.DrawWireSphere(transform.position - new Vector3(0.36f, 0f, 0f), 0.2f);
     }
+    */
 }

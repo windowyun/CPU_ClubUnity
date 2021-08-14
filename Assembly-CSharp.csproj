@@ -59,9 +59,11 @@
     <Compile Include="Assets\02.Scripts\Enemy.cs" />
     <Compile Include="Assets\02.Scripts\GameManager.cs" />
     <Compile Include="Assets\02.Scripts\AnimationManager.cs" />
+    <Compile Include="Assets\02.Scripts\Actor.cs" />
+    <Compile Include="Assets\02.Scripts\MoveCamera.cs" />
     <Compile Include="Assets\02.Scripts\Enemy01.cs" />
     <Compile Include="Assets\02.Scripts\csPlayer.cs" />
-    <Compile Include="Assets\02.Scripts\Actor.cs" />
+    <Compile Include="Assets\02.Scripts\ChangePlayer.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\Hugus\Enviro\BackGroundProps\#cbc2a3.txt" />

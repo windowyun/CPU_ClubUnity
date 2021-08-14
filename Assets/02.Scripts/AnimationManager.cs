@@ -5,45 +5,83 @@ using UnityEngine;
 public class AnimationManager : MonoBehaviour
 {
     [SerializeField]
-    Animator playeranimator;
+    Animator playeranimator1;
     [SerializeField]
-    Rigidbody2D playerrigidbody2D;
+    Animator playeranimator2;
     [SerializeField]
+    Rigidbody2D playerrigidbody2D1;
+    [SerializeField]
+    Rigidbody2D playerrigidbody2D2;
+    [SerializeField]
+    csPlayer player1;
+    [SerializeField]
+    csPlayer player2;
+    [SerializeField]
+    ChangePlayer changePlayer;
+
+    Animator currentAnimator;
+    Rigidbody2D currentRigid2D;
     csPlayer player;
 
     float rollTime = -3f;
+
+    void Awake()
+    {
+        ChangePlay();
+    }
 
     void Update()
     {
         JumpAnim();
         MoveAnim();
         RollAnim();
+
+        ChangePlay();
+    }
+
+    void ChangePlay()
+    {
+        if (changePlayer.Currentstats)
+        {
+            currentAnimator = playeranimator1;
+            currentRigid2D = playerrigidbody2D1;
+            player = player1;
+        }
+
+        else
+        {
+            currentAnimator = playeranimator2;
+            currentRigid2D = playerrigidbody2D2;
+            player = player2;
+        }
     }
 
     void MoveAnim()
     {
         if (Input.GetButton("Horizontal"))
-            playeranimator.SetBool("moving", true);
+            currentAnimator.SetBool("moving", true);
         else
-            playeranimator.SetBool("moving", false);
+            currentAnimator.SetBool("moving", false);
     }
 
     void JumpAnim()
     {
-        playeranimator.SetFloat("velocityY", playerrigidbody2D.velocity.y);
-        
+        currentAnimator.SetFloat("velocityY", currentRigid2D.velocity.y);
+
         if (Input.GetButtonDown("Jump") && player.IsJump)
         {
-            playeranimator.SetTrigger("Jump");
+            Debug.Log("asd");
+            currentAnimator.SetTrigger("Jump");
             
-            playeranimator.SetBool("jumping", true);
+            currentAnimator.SetBool("jumping", true);
         }
-
+        
         //점프 모션 종료 : 착지 모션 시작
         else if (player.IsJump)//&& playerrigidbody2D.velocity.y <= 0)
         {
-            playeranimator.SetBool("jumping", false);
+            currentAnimator.SetBool("jumping", false);
         }
+
     }
 
     void RollAnim()
@@ -51,7 +89,7 @@ public class AnimationManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.LeftShift) && player.IsJump && Time.time - rollTime > 3.0f )
         {
             rollTime = Time.time;
-            playeranimator.SetTrigger("Roll");
+            currentAnimator.SetTrigger("Roll");
         }
     }
 }

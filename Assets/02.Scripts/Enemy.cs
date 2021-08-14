@@ -11,7 +11,7 @@ public class Enemy : Actor
 
     void Start()
     {
-
+        currentHP = maxHP;
     }
 
     void Update()

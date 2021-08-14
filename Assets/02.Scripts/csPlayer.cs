@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class csPlayer : Actor
 {
+    [SerializeField] float scale = 3f;
+
     [Header("Move & Jump & Roll")]
     [SerializeField] float speed = 3.0f;
     [SerializeField] float rollSpeed = 4.0f;
@@ -21,6 +23,7 @@ public class csPlayer : Actor
     [Header("CoolTime")]
     [SerializeField] float rollCoolTime = 3.0f;
     [SerializeField] float rollTime = 0f;
+    [SerializeField] float invincibilityTime = 0.8f;
     //[SerializeField] float attackCoolTime = 0f;
     //[SerializeField] float attackTime = 0f;
 
@@ -33,9 +36,9 @@ public class csPlayer : Actor
     {
         get { return isJump; }
     }
+
     bool isRoll = false;
     bool invincibilityOn = false;
-    float invincibilityTime = 0.1f;
 
     bool stopAct = false;
 
@@ -69,6 +72,8 @@ public class csPlayer : Actor
         if (!stopAct)
         {
             FilpX();
+
+            MoveAnim();
 
             Jump();
 
@@ -108,6 +113,8 @@ public class csPlayer : Actor
             //Debug.Log(rigid.velocity.x);
         }
     }
+
+    
 
     void Attack()
     {
@@ -174,11 +181,21 @@ public class csPlayer : Actor
         rigid.velocity = new Vector2(h * speed, rigid.velocity.y);
     }
 
+    void MoveAnim()
+    {
+        if (Input.GetButton("Horizontal"))
+            anim.SetBool("moving", true);
+        else
+            anim.SetBool("moving", false);
+    }
+
     void Roll()//구르기
     {
         if (Input.GetKeyDown(KeyCode.LeftShift) && IsJump && Time.time - rollTime > rollCoolTime)
         {
             rollTime = Time.time;
+
+            anim.SetTrigger("Roll");
 
             isRoll = true;
             stopAct = true;
@@ -209,6 +226,7 @@ public class csPlayer : Actor
 
     void Jump()//점프
     {
+        anim.SetFloat("velocityY", rigid.velocity.y);
 
         // OverlapCircle로 땅 확인
         //isJump = Physics2D.OverlapCircle(trans.position + overlapCircleStart, overlapCircleRadius, LayerMask.GetMask("Ground"));
@@ -227,6 +245,10 @@ public class csPlayer : Actor
         {
             isJump = false;
 
+            anim.SetTrigger("Jump");
+
+            anim.SetBool("jumping", true);
+
             //velocity 점프
             //rigid.velocity = Vector2.up * jumpPower;
             //최고 속도 제한
@@ -240,6 +262,8 @@ public class csPlayer : Actor
             //AddForce 점프
             rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
         }
+
+        
     }
 
     void FilpX() //방향 전환
@@ -255,12 +279,12 @@ public class csPlayer : Actor
         if (Input.GetAxis("Horizontal") > 0)
         {
             //render.flipX = false;
-            transform.localScale = new Vector3(3f, 3f, 1f);
+            transform.localScale = new Vector3(scale, scale, 1f);
         }
         else if (Input.GetAxis("Horizontal") < 0)
         {
             //render.flipX = true;
-            transform.localScale = new Vector3(-3f, 3f, 1f);
+            transform.localScale = new Vector3(-scale, scale, 1f);
         }
     }
 
@@ -294,6 +318,9 @@ public class csPlayer : Actor
         {
             //Debug.Log("Up");
             //Debug.Log(Vector3.Cross(_col.transform.right, distVec).z);
+            //점프 모션 종료 : 착지 모션 시작
+            anim.SetBool("jumping", false);
+
             return true;
         }
         Debug.Log("Down");
@@ -326,13 +353,13 @@ public class csPlayer : Actor
 
         float direction = trans.position.x > transform.position.x ? 1 : -1;
         if (direction == 1)
-            transform.localScale = new Vector3(-3f, 3f, 1f);//render.flipX = true;
+            trans.localScale = new Vector3(-scale, scale, 1f);//render.flipX = true;
         else
-            transform.localScale = new Vector3(3f, 3f, 1f); //render.flipX = false;
+            trans.localScale = new Vector3(scale, scale, 1f); //render.flipX = false;
 
         rigid.velocity = new Vector2(0f, rigid.velocity.y);
         rigid.AddForce(Vector2.right * direction * 2, ForceMode2D.Impulse);
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(invincibilityTime);
         stopAct = false;
         yield return new WaitForSeconds(0.2f);
         invincibilityOn = false;
@@ -368,4 +395,5 @@ public class csPlayer : Actor
         
     }
     */
+    
 }

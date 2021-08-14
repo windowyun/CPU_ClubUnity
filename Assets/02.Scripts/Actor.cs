@@ -28,11 +28,6 @@ public class Actor : MonoBehaviour
         currentHP = maxHP;
     }
 
-    void Update()
-    {
-        
-    }
-
     public virtual void AttackOn()
     {
 
