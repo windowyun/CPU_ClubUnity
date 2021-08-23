@@ -9,6 +9,9 @@ public class ChangePlayer : MonoBehaviour
     [SerializeField] GameObject Skull2;
     [SerializeField] csPlayer csPlayer1;
     [SerializeField] csPlayer csPlayer2;
+    [Header("Camera")]
+    [SerializeField] GameObject camera1;
+    [SerializeField] GameObject camera2;
 
     csPlayer currentPlayer;
     bool currentstats = false;
@@ -28,6 +31,8 @@ public class ChangePlayer : MonoBehaviour
         {
             Skull2.SetActive(false);
             currentPlayer = csPlayer1;
+            camera2.SetActive(false);
+            camera1.SetActive(true);
             Skull1.SetActive(true);
             currentstats = true;
         }
@@ -36,6 +41,8 @@ public class ChangePlayer : MonoBehaviour
         {
             Skull1.SetActive(false);
             currentPlayer = csPlayer2;
+            camera1.SetActive(false);
+            camera2.SetActive(true);
             Skull2.SetActive(true);
             currentstats = false;
         }    
@@ -57,6 +64,8 @@ public class ChangePlayer : MonoBehaviour
             Skull1.transform.position = Skull2.transform.position + new Vector3(0f,0.38f, 0f);
             float dir = Skull1.transform.localScale.x > 0 ? 1f : -1f;
             Skull1.transform.localScale = new Vector3(4f * dir, 4f, 1f);
+            camera2.SetActive(false);
+            camera1.SetActive(true);
             currentstats = true;
             Skull1.SetActive(true);
         }
@@ -70,6 +79,8 @@ public class ChangePlayer : MonoBehaviour
             float dir = Skull1.transform.localScale.x > 0 ? 1f : -1f;
             Skull2.transform.localScale = new Vector3(3f * dir , 3f, 1f);
             currentstats = false;
+            camera1.SetActive(false);
+            camera2.SetActive(true);
             Skull2.SetActive(true);
         }
     }
